@@ -1,0 +1,31 @@
+# Ignorar archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Ignorar archivos de distribución
+*.egg-info/
+dist/
+build/
+
+# Ignorar archivos de entorno
+.env
+.venv
+venv/
+env/
+
+# Ignorar archivos temporales
+*.tmp
+*.temp
+*.log
+
+# Ignorar archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignorar archivos de sistema
+.DS_Store
+Thumbs.db
