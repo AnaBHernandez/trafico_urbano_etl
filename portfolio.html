@@ -3,220 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto ETL Tráfico Urbano | Ana Belén Hernández</title>
+    <title>Portfolio: Sistema ETL Tráfico Urbano | Ana Belén Hernández</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #017CEE; /* Airflow Blue */
-            --secondary-color: #2496ED; /* Docker Blue */
-            --accent-color: #7B42BC; /* Terraform Purple */
-            --dark-bg: #0f172a;
-            --card-bg: #1e293b;
-            --text-light: #f8fafc;
+            --primary: #017CEE; /* Airflow Blue */
+            --secondary: #2496ED; /* Docker Blue */
+            --accent: #7B42BC; /* Terraform Purple */
+            --dark: #0f172a;
+            --light: #f8fafc;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
         }
-        .hero-section {
-            background: linear-gradient(135deg, var(--dark-bg) 0%, #1e293b 100%);
+        .hero {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             color: white;
-            padding: 4rem 0;
-            margin-bottom: 2rem;
+            padding: 5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://www.transparenttextures.com/patterns/cubes.png');
+            opacity: 0.1;
         }
         .tech-badge {
-            font-size: 0.9rem;
-            padding: 0.5em 0.8em;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
             margin-right: 0.5rem;
             margin-bottom: 0.5rem;
-            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .tech-badge:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        .section-title {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 2rem;
+            position: relative;
             display: inline-block;
-            color: white;
         }
-        .bg-airflow { background-color: var(--primary-color); }
-        .bg-docker { background-color: var(--secondary-color); }
-        .bg-terraform { background-color: var(--accent-color); }
-        .bg-python { background-color: #3776AB; }
-        
-        .feature-card {
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 4px;
+            background: var(--primary);
+            margin-top: 0.5rem;
+            border-radius: 2px;
+        }
+        .card-custom {
+            border: none;
+            border-radius: 12px;
             background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             height: 100%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease;
+            overflow: hidden;
         }
-        .feature-card:hover {
+        .card-custom:hover {
             transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        .metric-box {
+        .metric-card {
             text-align: center;
-            padding: 1.5rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 2rem;
         }
         .metric-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
         }
-        .mermaid {
-            background: white;
-            padding: 1rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .metric-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
             overflow-x: auto;
         }
-        pre {
-            background-color: #2d2d2d;
-            color: #ccc;
-            padding: 1rem;
-            border-radius: 5px;
-            max-height: 300px;
-            overflow-y: auto;
+        .architecture-diagram {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        footer {
+            background: var(--dark);
+            color: #94a3b8;
+            padding: 3rem 0;
+            margin-top: 5rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- Hero Header -->
-    <header class="hero-section">
-        <div class="container">
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container position-relative z-1">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold">Sistema ETL de Tráfico Urbano</h1>
-                    <p class="lead">Ingeniería de datos moderna para el análisis de movilidad en tiempo real.</p>
-                    <div class="mt-4">
-                        <span class="tech-badge bg-airflow"><i class="fas fa-wind"></i> Apache Airflow</span>
-                        <span class="tech-badge bg-docker"><i class="fab fa-docker"></i> Docker</span>
-                        <span class="tech-badge bg-terraform"><i class="fas fa-cube"></i> Terraform</span>
-                        <span class="tech-badge bg-python"><i class="fab fa-python"></i> Python</span>
+                    <span class="text-uppercase tracking-wider text-white-50 fw-bold mb-2 d-block">Data Engineering Portfolio</span>
+                    <h1 class="display-3 fw-bold mb-3">Sistema ETL de Tráfico Urbano</h1>
+                    <p class="lead mb-4 text-white-50" style="max-width: 600px;">
+                        Una solución End-to-End para la ingesta, procesamiento y análisis de datos de movilidad en tiempo real utilizando arquitectura moderna.
+                    </p>
+                    <div class="d-flex flex-wrap">
+                        <span class="tech-badge"><i class="fas fa-wind"></i> Apache Airflow 2.7</span>
+                        <span class="tech-badge"><i class="fab fa-docker"></i> Docker & Compose</span>
+                        <span class="tech-badge"><i class="fas fa-cube"></i> Terraform (IaC)</span>
+                        <span class="tech-badge"><i class="fab fa-python"></i> Python & Pandas</span>
+                        <span class="tech-badge"><i class="fas fa-database"></i> SQL & Medallion</span>
                     </div>
                 </div>
-                <div class="col-lg-4 text-center d-none d-lg-block">
-                    <i class="fas fa-network-wired fa-8x text-white-50"></i>
+                <div class="col-lg-4 d-none d-lg-block text-center">
+                    <i class="fas fa-project-diagram fa-10x text-white-50 opacity-25"></i>
                 </div>
             </div>
         </div>
     </header>
 
-    <div class="container mb-5">
+    <div class="container my-5">
         
-        <!-- Resumen Ejecutivo -->
+        <!-- Executive Summary -->
         <section class="mb-5">
-            <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-bullseye text-primary"></i> Resumen del Proyecto</h2>
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <p class="card-text fs-5">
-                                Este proyecto implementa una arquitectura de datos completa (End-to-End) para procesar información de tráfico urbano. 
-                                Utiliza el patrón <strong>Medallion (Bronze/Silver/Golden)</strong> para transformar datos crudos de sensores en insights de negocio, 
-                                orquestado automáticamente y desplegado mediante infraestructura como código.
-                            </p>
+                    <div class="card-custom p-4">
+                        <h3 class="h4 fw-bold mb-3"><i class="fas fa-bullseye text-primary me-2"></i>Resumen del Proyecto</h3>
+                        <p class="text-secondary mb-0">
+                            Este proyecto implementa un pipeline de datos automatizado que transforma datos crudos de sensores de tráfico, semáforos y cámaras en insights accionables. 
+                            Diseñado bajo la arquitectura <strong>Medallion (Bronze, Silver, Golden)</strong>, garantiza la calidad y trazabilidad del dato. 
+                            La infraestructura es inmutable y reproducible gracias a <strong>Terraform</strong>, mientras que <strong>Airflow</strong> orquesta las tareas complejas de dependencia y reintento.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Metrics -->
+        <section class="mb-5">
+            <h2 class="section-title">Métricas de Impacto</h2>
+            <div class="row g-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="card-custom metric-card">
+                        <div class="metric-value">18s</div>
+                        <div class="metric-label">Tiempo de Proceso</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card-custom metric-card">
+                        <div class="metric-value">100%</div>
+                        <div class="metric-label">Tasa de Éxito</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card-custom metric-card">
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Capas de Datos</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="card-custom metric-card">
+                        <div class="metric-value">IaC</div>
+                        <div class="metric-label">Infraestructura</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Diagram -->
+        <section class="mb-5">
+            <h2 class="section-title">Arquitectura del Sistema</h2>
+            <div class="architecture-diagram">
+                <div class="mermaid text-center">
+                    graph LR
+                        subgraph "Fuentes (Bronze)"
+                            A[Sensores CSV] --> B[Ingesta]
+                            C[Cámaras CSV] --> B
+                            D[Incidentes CSV] --> B
+                        end
+                        
+                        subgraph "Procesamiento (Silver)"
+                            B --> E{Airflow ETL}
+                            E -->|Limpieza & Validación| F[(SQLite Silver)]
+                        end
+                        
+                        subgraph "Analítica (Golden)"
+                            F -->|Agregación SQL| G[(SQLite Golden)]
+                            G --> H[Dashboard / Reportes]
+                        end
+                        
+                        style E fill:#017CEE,stroke:#fff,color:#fff,stroke-width:2px
+                        style F fill:#e2e8f0,stroke:#94a3b8,stroke-width:2px
+                        style G fill:#fcd34d,stroke:#d97706,stroke-width:2px
+                </div>
+                <div class="text-center mt-3 text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> Flujo de datos siguiendo el patrón Medallion Architecture
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Deep Dive -->
+        <section class="mb-5">
+            <h2 class="section-title">Implementación Técnica</h2>
+            <div class="row g-4">
+                <!-- Infrastructure -->
+                <div class="col-lg-6">
+                    <div class="card-custom p-0">
+                        <div class="p-4 border-bottom">
+                            <h4 class="fw-bold"><i class="fas fa-server text-accent me-2" style="color: var(--accent);"></i>Infraestructura como Código</h4>
+                            <p class="text-muted small mb-0">Gestión de recursos Docker mediante Terraform para garantizar reproducibilidad.</p>
+                        </div>
+                        <div class="bg-dark">
+                            <pre class="code-block mb-0"><code># main.tf - Definición de recursos
+resource "docker_container" "airflow_scheduler" {
+  name  = "trafico_airflow_scheduler"
+  image = docker_image.airflow_custom.name
+  
+  env = [
+    "AIRFLOW__CORE__EXECUTOR=LocalExecutor"
+  ]
+  
+  volumes {
+    host_path      = abspath("${path.module}/../../dags")
+    container_path = "/opt/airflow/dags"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ETL Logic -->
+                <div class="col-lg-6">
+                    <div class="card-custom p-0">
+                        <div class="p-4 border-bottom">
+                            <h4 class="fw-bold"><i class="fas fa-code text-primary me-2"></i>Lógica ETL (Python)</h4>
+                            <p class="text-muted small mb-0">Transformaciones modulares utilizando Pandas y SQL dentro de Airflow.</p>
+                        </div>
+                        <div class="bg-dark">
+                            <pre class="code-block mb-0"><code># trafico_diario_urbano.py
+def crear_analisis_golden(**context):
+    """Genera la capa Golden agregada"""
+    cursor.execute("""
+        CREATE TABLE golden_analisis_trafico AS
+        SELECT 
+            s.ubicacion, 
+            AVG(s.velocidad_promedio) as velocidad,
+            COUNT(i.id) as incidentes
+        FROM silver_sensores s
+        LEFT JOIN silver_incidentes i ON ...
+        GROUP BY s.ubicacion
+    """)</code></pre>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Métricas -->
-        <section class="mb-5">
-            <h3 class="mb-4">Métricas de Rendimiento</h3>
-            <div class="row g-4">
-                <div class="col-md-3">
-                    <div class="metric-box">
-                        <div class="metric-value">18s</div>
-                        <div class="text-muted">Tiempo de Procesamiento</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="metric-box">
-                        <div class="metric-value">100%</div>
-                        <div class="text-muted">Tasa de Éxito</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="metric-box">
-                        <div class="metric-value">50+</div>
-                        <div class="text-muted">Sensores Simulados</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="metric-box">
-                        <div class="metric-value">IaC</div>
-                        <div class="text-muted">Terraform Managed</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Arquitectura -->
-        <section class="mb-5">
-            <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-sitemap text-primary"></i> Arquitectura del Sistema</h2>
+        <!-- Business Value -->
+        <section>
             <div class="row">
-                <div class="col-md-12">
-                    <div class="mermaid text-center">
-                        graph LR
-                            subgraph "Fuentes (Bronze)"
-                                A[Sensores CSV] --> B[Ingesta]
-                                C[Cámaras CSV] --> B
-                            end
-                            
-                            subgraph "Procesamiento (Silver)"
-                                B --> D{Airflow ETL}
-                                D -->|Limpieza| E[SQLite Silver]
-                            end
-                            
-                            subgraph "Analítica (Golden)"
-                                E -->|Agregación| F[SQLite Golden]
-                                F --> G[Dashboard / Reportes]
-                            end
-                            
-                            style D fill:#017CEE,stroke:#fff,color:#fff
-                            style E fill:#e2e8f0
-                            style F fill:#fcd34d
-                    </div>
-                    <p class="text-center text-muted mt-2">Diagrama simplificado del flujo de datos Medallion</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Detalles Técnicos -->
-        <section class="mb-5">
-            <h2 class="border-bottom pb-2 mb-4"><i class="fas fa-code text-primary"></i> Implementación Técnica</h2>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="feature-card">
-                        <h4><i class="fab fa-docker text-primary"></i> Infraestructura Híbrida</h4>
-                        <p>Despliegue flexible utilizando tanto <strong>Docker Compose</strong> para desarrollo local rápido como <strong>Terraform</strong> para la gestión profesional de recursos (Redes, Volúmenes, Contenedores).</p>
-                        <hr>
-                        <small class="text-muted">Archivo: main.tf</small>
-                        <pre class="mt-2"><code>resource "docker_container" "airflow_scheduler" {
-  name  = "trafico_airflow_scheduler"
-  image = docker_image.airflow_custom.name
-  env = [
-    "AIRFLOW__CORE__EXECUTOR=LocalExecutor"
-  ]
-}</code></pre>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="feature-card">
-                        <h4><i class="fas fa-project-diagram text-primary"></i> Orquestación ETL</h4>
-                        <p>DAGs de Airflow diseñados modularmente. Las tareas están desacopladas y utilizan <strong>PythonOperators</strong> para la lógica de transformación con Pandas y SQL.</p>
-                        <hr>
-                        <small class="text-muted">Archivo: trafico_diario_urbano.py</small>
-                        <pre class="mt-2"><code>def crear_analisis_golden(**context):
-    cursor.execute("""
-        CREATE TABLE golden_analisis_trafico AS
-        SELECT s.ubicacion, AVG(s.velocidad)
-        FROM silver_sensores s
-        GROUP BY s.ubicacion
-    """)</code></pre>
+                <div class="col-12">
+                    <div class="card-custom p-5 bg-white">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="fw-bold mb-3">Valor para el Negocio</h3>
+                                <ul class="list-unstyled">
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                                        <div>
+                                            <strong>Toma de decisiones en tiempo real:</strong>
+                                            <p class="text-muted mb-0 small">Permite a las autoridades ajustar semáforos basándose en datos actuales, no históricos.</p>
+                                        </div>
+                                    </li>
+                                    <li class="mb-3 d-flex align-items-start">
+                                        <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                                        <div>
+                                            <strong>Reducción de costos operativos:</strong>
+                                            <p class="text-muted mb-0 small">Automatiza la generación de reportes que antes tomaba horas de trabajo manual.</p>
+                                        </div>
+                                    </li>
+                                    <li class="d-flex align-items-start">
+                                        <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                                        <div>
+                                            <strong>Escalabilidad garantizada:</strong>
+                                            <p class="text-muted mb-0 small">La arquitectura basada en contenedores permite procesar más sensores sin cambiar el código.</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <img src="https://cdn-icons-png.flaticon.com/512/2942/2942544.png" alt="Analytics" class="img-fluid" style="max-width: 150px; opacity: 0.8;">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -224,17 +338,29 @@
 
     </div>
 
-    <footer class="bg-dark text-white py-4 mt-5">
+    <!-- Footer -->
+    <footer>
         <div class="container text-center">
-            <p class="mb-0">Desarrollado por <strong>Ana Belén Hernández</strong></p>
-            <p class="small text-white-50">Data Engineer Portfolio</p>
+            <h4 class="text-white mb-4">Ana Belén Hernández</h4>
+            <p class="mb-4">Data Engineer | Cloud Architecture | Python Developer</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="https://github.com/AnaBHernandez" class="text-white-50 hover-white" target="_blank"><i class="fab fa-github fa-lg"></i></a>
+                <a href="https://www.linkedin.com/in/anabel%C3%A9nhern%C3%A1ndez/" class="text-white-50 hover-white" target="_blank"><i class="fab fa-linkedin fa-lg"></i></a>
+                <a href="mailto:anahernandezfit@gmail.com" class="text-white-50 hover-white"><i class="fas fa-envelope fa-lg"></i></a>
+            </div>
+            <hr class="border-secondary my-4 w-50 mx-auto">
+            <p class="small text-white-50 mb-0">&copy; 2025 Proyecto de Portfolio Técnico. Construido con Bootstrap 5 & Mermaid.js</p>
         </div>
     </footer>
 
     <!-- Scripts -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: true });
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+        });
     </script>
 </body>
 </html>

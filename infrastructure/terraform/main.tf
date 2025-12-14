@@ -13,14 +13,15 @@ terraform {
 
 # Configuración del proveedor Docker
 provider "docker" {
-  host = "npipe:////./pipe/docker_engine"
+  # host = "npipe:////./pipe/docker_engine" # Descomentar para Windows
+  host = "unix:///var/run/docker.sock"      # Estándar para Linux/Mac
 }
 
 # Imagen personalizada de Airflow (con Pandas)
 resource "docker_image" "airflow_custom" {
   name = "trafico_airflow_custom:latest"
   build {
-    context = abspath("${path.module}/../../")
+    context = "../.."
     dockerfile = "Dockerfile"
   }
 }
