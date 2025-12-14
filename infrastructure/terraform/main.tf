@@ -13,7 +13,16 @@ terraform {
 
 # Configuración del proveedor Docker
 provider "docker" {
-  host = "unix:///var/run/docker.sock"
+  host = "npipe:////./pipe/docker_engine"
+}
+
+# Imagen personalizada de Airflow (con Pandas)
+resource "docker_image" "airflow_custom" {
+  name = "trafico_airflow_custom:latest"
+  build {
+    context = abspath("${path.module}/../../")
+    dockerfile = "Dockerfile"
+  }
 }
 
 # Red Docker para el proyecto
@@ -55,7 +64,7 @@ resource "docker_container" "postgres" {
 # Contenedor Airflow Webserver
 resource "docker_container" "airflow_webserver" {
   name  = "trafico_airflow_webserver"
-  image = "apache/airflow:2.7.3"
+  image = docker_image.airflow_custom.name
   
   env = [
     "AIRFLOW__CORE__EXECUTOR=LocalExecutor",
@@ -65,13 +74,13 @@ resource "docker_container" "airflow_webserver" {
   ]
   
   volumes {
-    host_path      = "/home/ana-hernandez/Documentos/Proyectos/trafico_urbano_etl/dags"
+    host_path      = abspath("${path.module}/../../dags")
     container_path = "/opt/airflow/dags"
   }
   
   volumes {
-    host_path      = "/home/ana-hernandez/Documentos/Proyectos/trafico_urbano_etl/data"
-    container_path = "/opt/airflow/data"
+    host_path      = abspath("${path.module}/../../buckets")
+    container_path = "/opt/airflow/buckets"
   }
   
   networks_advanced {
@@ -89,7 +98,7 @@ resource "docker_container" "airflow_webserver" {
 # Contenedor Airflow Scheduler
 resource "docker_container" "airflow_scheduler" {
   name  = "trafico_airflow_scheduler"
-  image = "apache/airflow:2.7.3"
+  image = docker_image.airflow_custom.name
   
   env = [
     "AIRFLOW__CORE__EXECUTOR=LocalExecutor",
@@ -97,13 +106,13 @@ resource "docker_container" "airflow_scheduler" {
   ]
   
   volumes {
-    host_path      = "/home/ana-hernandez/Documentos/Proyectos/trafico_urbano_etl/dags"
+    host_path      = abspath("${path.module}/../../dags")
     container_path = "/opt/airflow/dags"
   }
   
   volumes {
-    host_path      = "/home/ana-hernandez/Documentos/Proyectos/trafico_urbano_etl/data"
-    container_path = "/opt/airflow/data"
+    host_path      = abspath("${path.module}/../../buckets")
+    container_path = "/opt/airflow/buckets"
   }
   
   networks_advanced {
