@@ -188,7 +188,7 @@ services:
       - postgres-db-volume:/var/lib/postgresql/data
 
   airflow-webserver:
-    image: apache/airflow:2.7.3
+    build: .
     ports:
       - "8082:8080"
     volumes:
@@ -198,7 +198,7 @@ services:
       - airflow-init
 
   airflow-scheduler:
-    image: apache/airflow:2.7.3
+    build: .
     volumes:
       - ./buckets:/opt/airflow/buckets
     depends_on:

@@ -44,9 +44,6 @@ docker-compose up -d
 ### **⚡ Verificación Rápida**
 
 ```bash
-# Verificar que todo funciona
-./scripts/health_check.sh
-
 # Ejecutar DAG de demostración
 docker exec trafico_urbano_etl-airflow-scheduler-1 airflow dags trigger trafico_diario_urbano
 ```
