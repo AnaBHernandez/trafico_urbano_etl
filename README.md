@@ -23,7 +23,8 @@ Este proyecto implementa un **sistema ETL (Extract, Transform, Load) completo** 
 ## 🚀 **Inicio Rápido**
 
 ### **Prerrequisitos**
-- Docker y Docker Compose
+- Docker
+- Terraform (>= 1.0)
 - Git
 - 4GB RAM mínimo
 
@@ -32,10 +33,10 @@ Este proyecto implementa un **sistema ETL (Extract, Transform, Load) completo** 
 ```bash
 # 1. Clonar y entrar
 git clone https://github.com/AnaBHernandez/trafico_urbano_etl.git
-cd trafico_urbano_etl
+cd trafico_urbano_etl/infrastructure/terraform
 
 # 2. Iniciar sistema completo
-docker-compose up -d
+terraform init && terraform apply -auto-approve
 
 # 3. ¡Listo! Acceder a Airflow
 # 🌐 http://localhost:8080 | 👤 admin | 🔑 admin
@@ -44,8 +45,8 @@ docker-compose up -d
 ### **⚡ Verificación Rápida**
 
 ```bash
-# Ejecutar DAG de demostración
-docker exec trafico_urbano_etl-airflow-scheduler-1 airflow dags trigger trafico_urbano_etl
+# Ejecutar DAG de simulación
+docker exec trafico_airflow_scheduler airflow dags trigger trafico_simulacion_principal
 ```
 
 ## 📊 **Métricas del Sistema**
@@ -58,68 +59,26 @@ docker exec trafico_urbano_etl-airflow-scheduler-1 airflow dags trigger trafico_
 
 ## 🏗️ **Arquitectura del Sistema**
 
-### **📊 Arquitectura Técnica Detallada**
-
 ```mermaid
-graph TD
-    %% Definición de Estilos
-    classDef infra fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000;
-    classDef storage fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000;
-    classDef process fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000;
-    classDef airflow fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000;
-
-    subgraph Infraestructura ["🏗️ Infraestructura (IaC)"]
-        TF[Terraform]:::infra -->|Orquesta| Docker[Docker Engine]:::infra
-        Docker -->|Gestiona| Net[Red: trafico_urbano_network]:::infra
-        
-        subgraph Contenedores ["🐳 Contenedores"]
-            PG[(PostgreSQL DW)]:::storage
-            Web[Airflow Webserver]:::airflow
-            Sch[Airflow Scheduler]:::airflow
-        end
-        
-        Net --- Contenedores
+flowchart TD
+    subgraph Sources [🥉 Fuentes]
+        A[📄 CSVs]
+        B[🎲 Simulación]
     end
 
-    subgraph Pipeline ["🔄 Pipeline ELT (Bronze → Silver → Golden)"]
-        direction TB
-        
-        subgraph Sources ["🥉 Fuentes (Bronze)"]
-            CSV[📂 CSVs Locales]:::storage
-            Sim[🎲 Generador Python]:::process
-        end
-
-        subgraph Ingestion ["⚙️ Ingesta & Carga"]
-            DAG1[DAG: trafico_diario]:::airflow
-            DAG2[DAG: trafico_simulacion]:::airflow
-        end
-
-        subgraph Warehouse ["🥈 & 🥇 Data Warehouse (Postgres)"]
-            Silver[Tablas Silver\n(sensores, incidentes...)]:::storage
-            Golden[Tabla Golden\n(golden_analisis_trafico)]:::storage
-        end
-
-        subgraph Analytics ["📊 Consumo"]
-            DAG3[DAG: trafico_historico]:::airflow
-            Report[Reportes & Métricas]:::process
-        end
-
-        %% Flujos
-        CSV -->|Lee| DAG1
-        Sim -->|Genera| DAG2
-        
-        DAG1 -->|Carga Raw| Silver
-        DAG2 -->|Carga Raw| Silver
-        
-        Silver -->|Transformación SQL| Golden
-        
-        Golden -->|Lee| DAG3
-        DAG3 -->|Genera| Report
+    subgraph Orchestrator [⚙️ Orquestador]
+        C{{🌪️ Apache Airflow}}
     end
 
-    %% Conexión Lógica
-    PG -.->|Aloja| Silver
-    PG -.->|Aloja| Golden
+    subgraph Warehouse [🗄️ Data Warehouse]
+        D[(🥈 Silver)]
+        E[(🥇 Golden)]
+    end
+
+    Sources -->|Ingesta| C
+    C -->|Carga| D
+    D -->|Transformación SQL| E
+    E -->|Consumo| F[📊 Reportes]
 ```
 
 ## 🔧 **Comandos Útiles**
@@ -127,41 +86,38 @@ graph TD
 ### **Gestión del Sistema**
 
 ```bash
-# Iniciar servicios
-docker-compose up -d
+# Iniciar infraestructura (desde infrastructure/terraform)
+terraform apply -auto-approve
 
 # Ver estado
-docker-compose ps
+docker ps
 
-# Ver logs
-docker-compose logs -f
+# Ver logs de Airflow
+docker logs -f trafico_airflow_webserver
 
-# Parar servicios
-docker-compose down
+# Destruir infraestructura
+terraform destroy -auto-approve
 ```
 
 ### **Gestión de Datos**
 
 ```bash
 # Ejecutar DAG manualmente
-docker exec trafico_urbano_etl-airflow-scheduler-1 \
+docker exec trafico_airflow_scheduler \
   airflow dags trigger trafico_diario_urbano
 
 # Ver tablas en base de datos
-docker exec trafico_urbano_etl-airflow-scheduler-1 \
-  sqlite3 /opt/airflow/buckets/golden-bucket/database/trafico_urbano.db ".tables"
+docker exec -it trafico_postgres psql -U airflow -d airflow -c "\dt"
 
 # Consultar datos
-docker exec trafico_urbano_etl-airflow-scheduler-1 \
-  sqlite3 /opt/airflow/buckets/golden-bucket/database/trafico_urbano.db \
-  "SELECT COUNT(*) FROM silver_sensores_trafico;"
+docker exec -it trafico_postgres psql -U airflow -d airflow -c \
+  "SELECT COUNT(*) FROM golden_analisis_trafico;"
 ```
 
 ## 📁 **Estructura del Proyecto**
 
 ```
 trafico_urbano_etl/
-├── 🐳 docker-compose.yaml          # Orquestación de servicios
 ├── 🏗️ infrastructure/terraform/   # Infrastructure as Code
 ├── 📊 dags/trafico_urbano/         # Pipelines ETL
 ├── 🗄️ buckets/                    # Arquitectura de datos
@@ -177,16 +133,12 @@ trafico_urbano_etl/
 ### **Backend & Orquestación**
 - **Apache Airflow 2.7.3** - Orquestación de workflows
 - **PostgreSQL 13** - Base de datos de metadatos
-- **SQLite** - Almacenamiento de datos procesados
 
 ### **Infraestructura**
-- **Docker & Docker Compose** - Containerización
-- **Terraform** - Infrastructure as Code
-- **Python 3.8** - Lógica de procesamiento
+- **Terraform** - Infraestructura como Código (IaC)
 
 ### **Librerías Python**
 - **Pandas** - Manipulación de datos
-- **SQLite3** - Interacción con base de datos
 - **Apache Airflow** - Orquestación
 
 ## 📚 **Documentación**
