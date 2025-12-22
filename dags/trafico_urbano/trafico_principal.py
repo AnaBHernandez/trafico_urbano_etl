@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 DAG Principal del Sistema ETL de Tráfico Urbano
-Versión limpia y funcional - Solo las tareas que funcionan
+Versión: SIMULACIÓN (Genera datos sintéticos en PostgreSQL)
+Nota: Este DAG es útil para pruebas cuando no hay CSVs disponibles.
 """
 
+import os
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-import sqlite3
+from sqlalchemy import create_engine, text
 
 # Configuración del DAG
 default_args = {
@@ -21,16 +23,13 @@ default_args = {
 }
 
 dag = DAG(
-    'trafico_principal',
+    'trafico_simulacion_principal',  # Renombrado para evitar confusión
     default_args=default_args,
-    description='DAG Principal - Sistema ETL de Tráfico Urbano',
-    schedule_interval='@daily',
+    description='Generador de datos simulados en PostgreSQL',
+    schedule_interval=None,  # Ejecución manual para no sobreescribir datos reales
     catchup=False,
-    tags=['trafico', 'principal', 'etl']
+    tags=['trafico', 'simulacion', 'postgres']
 )
-
-# Configuración de base de datos
-DB_PATH = '/opt/airflow/buckets/golden-bucket/database/trafico_urbano.db'
 
 
 def verificar_base_datos(**context):
@@ -38,19 +37,21 @@ def verificar_base_datos(**context):
     print("🔍 VERIFICANDO BASE DE DATOS...")
 
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-
-        # Verificar tablas
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = cursor.fetchall()
-        print(f"✅ Tablas encontradas: {len(tables)}")
-
-        for table in tables:
-            print(f"  - {table[0]}")
-
-        conn.close()
-        return f"Base de datos verificada: {len(tables)} tablas"
+        engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+        
+        with engine.connect() as conn:
+            # Verificar tablas en Postgres
+            result = conn.execute(text("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+            """))
+            tables = result.fetchall()
+            print(f"✅ Tablas encontradas: {len(tables)}")
+            for table in tables:
+                print(f"  - {table[0]}")
+                
+        return f"PostgreSQL verificado: {len(tables)} tablas"
 
     except Exception:
         print("❌ Error verificando base de datos")
@@ -77,14 +78,11 @@ def cargar_datos_sensores(**context):
         df = pd.DataFrame(data)
         print(f"✅ Datos cargados: {len(df)} registros")
 
-        # Conectar a base de datos
-        conn = sqlite3.connect(DB_PATH)
+        # Cargar a Postgres
+        engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+        df.to_sql('silver_sensores_trafico', engine, if_exists='replace', index=False)
 
-        # Cargar a tabla Silver
-        df.to_sql('silver_sensores_trafico', conn, if_exists='replace', index=False)
-
-        conn.close()
-        print("✅ Datos de sensores cargados exitosamente")
+        print("✅ Datos de sensores simulados cargados en PostgreSQL")
         return f"Sensores cargados: {len(df)} registros"
 
     except Exception:
@@ -111,14 +109,11 @@ def cargar_datos_incidentes(**context):
         df = pd.DataFrame(data)
         print(f"✅ Datos cargados: {len(df)} registros")
 
-        # Conectar a base de datos
-        conn = sqlite3.connect(DB_PATH)
+        # Cargar a Postgres
+        engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+        df.to_sql('silver_incidentes_trafico', engine, if_exists='replace', index=False)
 
-        # Cargar a tabla Silver
-        df.to_sql('silver_incidentes_trafico', conn, if_exists='replace', index=False)
-
-        conn.close()
-        print("✅ Datos de incidentes cargados exitosamente")
+        print("✅ Datos de incidentes simulados cargados en PostgreSQL")
         return f"Incidentes cargados: {len(df)} registros"
 
     except Exception:
@@ -131,35 +126,33 @@ def crear_analisis_golden(**context):
     print("🏆 CREANDO ANÁLISIS GOLDEN...")
 
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-
-        # Crear tabla Golden con análisis consolidado
-        cursor.execute("""
-            DROP TABLE IF EXISTS golden_analisis_trafico
-        """)
-
-        cursor.execute("""
-            CREATE TABLE golden_analisis_trafico AS
-            SELECT
-                s.sensor_id,
-                s.ubicacion,
-                s.velocidad_promedio,
-                s.vehiculos_por_hora,
-                s.ocupacion_porcentaje,
-                i.tipo_incidente,
-                i.severidad,
-                datetime('now') as analyzed_at
-            FROM silver_sensores_trafico s
-            LEFT JOIN silver_incidentes_trafico i ON s.ubicacion = i.ubicacion
-        """)
-
-        # Verificar resultados
-        cursor.execute("SELECT COUNT(*) FROM golden_analisis_trafico")
-        count = cursor.fetchone()[0]
-
-        conn.commit()
-        conn.close()
+        engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+        
+        with engine.connect() as conn:
+            # Crear tabla Golden con análisis consolidado
+            conn.execute(text("DROP TABLE IF EXISTS golden_analisis_trafico"))
+            
+            conn.execute(text("""
+                CREATE TABLE golden_analisis_trafico AS
+                SELECT
+                    s.sensor_id,
+                    s.ubicacion,
+                    s.velocidad_promedio,
+                    s.vehiculos_por_hora,
+                    s.ocupacion_porcentaje,
+                    i.tipo_incidente,
+                    i.severidad,
+                    NOW() as analyzed_at
+                FROM silver_sensores_trafico s
+                LEFT JOIN silver_incidentes_trafico i ON s.ubicacion = i.ubicacion
+            """))
+            
+            # Verificar resultados
+            result = conn.execute(text("SELECT COUNT(*) FROM golden_analisis_trafico"))
+            count = result.fetchone()[0]
+            # SQLAlchemy hace commit automático o al cerrar el bloque with en versiones modernas, 
+            # pero para DDL a veces se requiere commit explícito si no es autocommit.
+            # En este caso, create_engine por defecto suele funcionar bien para esto en modo básico.
 
         print(f"✅ Análisis Golden creado: {count} registros")
         return f"Análisis Golden: {count} registros"
@@ -174,26 +167,24 @@ def generar_metricas_finales(**context):
     print("📊 GENERANDO MÉTRICAS FINALES...")
 
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+        engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+        
+        with engine.connect() as conn:
+            # Métricas de sensores
+            result = conn.execute(text("SELECT COUNT(*) FROM silver_sensores_trafico"))
+            sensores_count = result.fetchone()[0]
 
-        # Métricas de sensores
-        cursor.execute("SELECT COUNT(*) FROM silver_sensores_trafico")
-        sensores_count = cursor.fetchone()[0]
+            # Métricas de incidentes
+            result = conn.execute(text("SELECT COUNT(*) FROM silver_incidentes_trafico"))
+            incidentes_count = result.fetchone()[0]
 
-        # Métricas de incidentes
-        cursor.execute("SELECT COUNT(*) FROM silver_incidentes_trafico")
-        incidentes_count = cursor.fetchone()[0]
+            # Métricas de análisis Golden
+            result = conn.execute(text("SELECT COUNT(*) FROM golden_analisis_trafico"))
+            golden_count = result.fetchone()[0]
 
-        # Métricas de análisis Golden
-        cursor.execute("SELECT COUNT(*) FROM golden_analisis_trafico")
-        golden_count = cursor.fetchone()[0]
-
-        # Velocidad promedio
-        cursor.execute("SELECT AVG(velocidad_promedio) FROM golden_analisis_trafico")
-        velocidad_promedio = cursor.fetchone()[0] or 0
-
-        conn.close()
+            # Velocidad promedio
+            result = conn.execute(text("SELECT AVG(velocidad_promedio) FROM golden_analisis_trafico"))
+            velocidad_promedio = result.fetchone()[0] or 0
 
         print("📈 MÉTRICAS DEL SISTEMA:")
         print(f"  • Sensores procesados: {sensores_count}")

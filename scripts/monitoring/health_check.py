@@ -10,8 +10,8 @@ from datetime import datetime
 from pathlib import Path
 class HealthChecker:
     def __init__(self):
-        self.db_path = "data/trafico_urbano.db"
-        self.airflow_ui_url = "http://localhost:8082"
+        self.db_path = "buckets/golden-bucket/database/trafico_urbano.db"
+        self.airflow_ui_url = "http://localhost:8080"
     def check_database_health(self):
         """Verificar salud de la base de datos"""
         try:

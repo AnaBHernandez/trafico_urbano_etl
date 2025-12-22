@@ -43,3 +43,15 @@ variable "airflow_admin_password" {
   default     = "admin"
   sensitive   = true
 }
+
+variable "airflow_fernet_key" {
+  description = "Clave Fernet para encriptación en Airflow (debe ser base64 url-safe de 32 bytes)"
+  type        = string
+  default     = "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=" # Clave estática para dev
+}
+
+variable "airflow_webserver_secret_key" {
+  description = "Clave secreta para firmar cookies y comunicación interna en Airflow"
+  type        = string
+  default     = "clave_secreta_fija_para_desarrollo_local"
+}

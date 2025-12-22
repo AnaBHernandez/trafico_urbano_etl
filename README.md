@@ -17,7 +17,7 @@ Este proyecto implementa un **sistema ETL (Extract, Transform, Load) completo** 
 - ⚡ **Procesamiento en tiempo real** con Apache Airflow 2.7.3
 - 🐳 **Containerización completa** con Docker
 - 🏗️ **Infrastructure as Code** con Terraform
-- 📊 **Base de datos SQLite** para análisis local
+- 📊 **Base de datos PostgreSQL** como Data Warehouse
 - 🔄 **Orquestación automatizada** de pipelines ETL
 
 ## 🚀 **Inicio Rápido**
@@ -38,14 +38,14 @@ cd trafico_urbano_etl
 docker-compose up -d
 
 # 3. ¡Listo! Acceder a Airflow
-# 🌐 http://localhost:8082 | 👤 admin | 🔑 admin
+# 🌐 http://localhost:8080 | 👤 admin | 🔑 admin
 ```
 
 ### **⚡ Verificación Rápida**
 
 ```bash
 # Ejecutar DAG de demostración
-docker exec trafico_urbano_etl-airflow-scheduler-1 airflow dags trigger trafico_diario_urbano
+docker exec trafico_urbano_etl-airflow-scheduler-1 airflow dags trigger trafico_urbano_etl
 ```
 
 ## 📊 **Métricas del Sistema**
@@ -58,46 +58,68 @@ docker exec trafico_urbano_etl-airflow-scheduler-1 airflow dags trigger trafico_
 
 ## 🏗️ **Arquitectura del Sistema**
 
-### **📊 Arquitectura Medallion (Bronze/Silver/Golden)**
+### **📊 Arquitectura Técnica Detallada**
 
 ```mermaid
-graph TB
-    subgraph "🥉 BRONZE LAYER - Datos en Crudo"
-        A1[📊 Sensores CSV]
-        A2[🚦 Semáforos CSV]
-        A3[📹 Cámaras CSV]
-        A4[⚠️ Incidentes CSV]
-        A5[🚗 Vehículos CSV]
+graph TD
+    %% Definición de Estilos
+    classDef infra fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000;
+    classDef storage fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000;
+    classDef process fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000;
+    classDef airflow fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000;
+
+    subgraph Infraestructura ["🏗️ Infraestructura (IaC)"]
+        TF[Terraform]:::infra -->|Orquesta| Docker[Docker Engine]:::infra
+        Docker -->|Gestiona| Net[Red: trafico_urbano_network]:::infra
+        
+        subgraph Contenedores ["🐳 Contenedores"]
+            PG[(PostgreSQL DW)]:::storage
+            Web[Airflow Webserver]:::airflow
+            Sch[Airflow Scheduler]:::airflow
+        end
+        
+        Net --- Contenedores
     end
-    
-    subgraph "🥈 SILVER LAYER - Datos Procesados"
-        B1[🔧 Limpieza de Datos]
-        B2[📊 Validación]
-        B3[🔄 Transformación]
-        B4[💾 SQLite Tables]
+
+    subgraph Pipeline ["🔄 Pipeline ELT (Bronze → Silver → Golden)"]
+        direction TB
+        
+        subgraph Sources ["🥉 Fuentes (Bronze)"]
+            CSV[📂 CSVs Locales]:::storage
+            Sim[🎲 Generador Python]:::process
+        end
+
+        subgraph Ingestion ["⚙️ Ingesta & Carga"]
+            DAG1[DAG: trafico_diario]:::airflow
+            DAG2[DAG: trafico_simulacion]:::airflow
+        end
+
+        subgraph Warehouse ["🥈 & 🥇 Data Warehouse (Postgres)"]
+            Silver[Tablas Silver\n(sensores, incidentes...)]:::storage
+            Golden[Tabla Golden\n(golden_analisis_trafico)]:::storage
+        end
+
+        subgraph Analytics ["📊 Consumo"]
+            DAG3[DAG: trafico_historico]:::airflow
+            Report[Reportes & Métricas]:::process
+        end
+
+        %% Flujos
+        CSV -->|Lee| DAG1
+        Sim -->|Genera| DAG2
+        
+        DAG1 -->|Carga Raw| Silver
+        DAG2 -->|Carga Raw| Silver
+        
+        Silver -->|Transformación SQL| Golden
+        
+        Golden -->|Lee| DAG3
+        DAG3 -->|Genera| Report
     end
-    
-    subgraph "🥇 GOLDEN LAYER - Análisis Finales"
-        C1[📈 Métricas Agregadas]
-        C2[📊 Reportes]
-        C3[🎯 Insights]
-        C4[📋 Dashboard Data]
-    end
-    
-    A1 --> B1
-    A2 --> B1
-    A3 --> B1
-    A4 --> B1
-    A5 --> B1
-    
-    B1 --> B2
-    B2 --> B3
-    B3 --> B4
-    
-    B4 --> C1
-    B4 --> C2
-    B4 --> C3
-    B4 --> C4
+
+    %% Conexión Lógica
+    PG -.->|Aloja| Silver
+    PG -.->|Aloja| Golden
 ```
 
 ## 🔧 **Comandos Útiles**

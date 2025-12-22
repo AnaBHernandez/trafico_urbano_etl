@@ -190,7 +190,7 @@ services:
   airflow-webserver:
     build: .
     ports:
-      - "8082:8080"
+      - "8080:8080"
     volumes:
       - ./buckets:/opt/airflow/buckets
     depends_on:
@@ -267,7 +267,7 @@ services:
 - 🔄 **Tasa de éxito:** 100% (0 errores en producción)
 
 ### **Monitoreo en Tiempo Real**
-- 🌐 **Airflow UI:** http://localhost:8082
+- 🌐 **Airflow UI:** http://localhost:8080
 - 📋 **DAG Status:** Verde = Éxito, Rojo = Error
 - 📊 **Task Logs:** Logs detallados por tarea
 - 🔔 **Alertas:** Notificaciones automáticas

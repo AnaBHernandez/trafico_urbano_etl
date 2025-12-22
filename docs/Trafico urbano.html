@@ -159,6 +159,15 @@
 
     <div class="container my-5">
         
+        <!-- Contexto Profesional (Disclaimer) -->
+        <div class="alert alert-light border-start border-4 border-primary shadow-sm mb-5" role="alert">
+            <h4 class="alert-heading fw-bold"><i class="fas fa-user-shield text-primary me-2"></i>Contexto Profesional</h4>
+            <p class="mb-0 text-muted">
+                Este proyecto es una <strong>réplica técnica (Mirror Project)</strong> del sistema productivo que desarrollé durante mis prácticas ("Tecnología AB"). 
+                Debido a acuerdos de confidencialidad, he reconstruido la arquitectura original utilizando <strong>Docker y datos simulados</strong> para demostrar mis competencias técnicas (ETL, Orquestación, IaC) respetando la protección de datos de la empresa.
+            </p>
+        </div>
+
         <!-- Executive Summary -->
         <section class="mb-5">
             <div class="row">
@@ -220,11 +229,11 @@
                         
                         subgraph "Procesamiento (Silver)"
                             B --> E{Airflow ETL}
-                            E -->|Limpieza & Validación| F[(SQLite Silver)]
+                            E -->|Limpieza & Validación| F[(PostgreSQL Silver)]
                         end
                         
                         subgraph "Analítica (Golden)"
-                            F -->|Agregación SQL| G[(SQLite Golden)]
+                            F -->|Agregación SQL| G[(PostgreSQL Golden)]
                             G --> H[Dashboard / Reportes]
                         end
                         
@@ -254,15 +263,19 @@
 resource "docker_container" "airflow_scheduler" {
   name  = "trafico_airflow_scheduler"
   image = docker_image.airflow_custom.name
+  restart = "always"
   
   env = [
-    "AIRFLOW__CORE__EXECUTOR=LocalExecutor"
+    "AIRFLOW__CORE__EXECUTOR=LocalExecutor",
+    "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@trafico_postgres/airflow"
   ]
   
   volumes {
     host_path      = abspath("${path.module}/../../dags")
     container_path = "/opt/airflow/dags"
   }
+  
+  depends_on = [docker_container.postgres]
 }</code></pre>
                         </div>
                     </div>

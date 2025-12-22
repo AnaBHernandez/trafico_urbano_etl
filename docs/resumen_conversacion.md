@@ -48,3 +48,17 @@ Se desarrolló un archivo `portfolio.html` independiente para presentar el proye
 1.  Ajuste de `main.tf` para usar el socket unix (`unix:///var/run/docker.sock`).
 2.  Commit y Push de todo el código a GitHub.
 3.  Instrucciones de despliegue en Linux (`git clone` + `docker-compose up`).
+
+## 5. ✅ Verificación de Compatibilidad Linux
+
+**Análisis de Portabilidad:**
+
+1.  **Rutas de Archivos:** El uso de `abspath("${path.module}/../../dags")` en el código de Terraform (visible en el Portfolio) funcionará nativamente en Linux, resolviendo rutas absolutas tipo `/home/ana-hernandez/...` sin problemas de barras invertidas (`\`).
+2.  **Docker Socket:** Al usar Linux, el provider de Docker debe configurarse con `host = "unix:///var/run/docker.sock"`, lo cual es el estándar y más estable que la conexión TCP de Windows.
+3.  **Portfolio Web:** El archivo `portfolio.html` es agnóstico al sistema operativo y se visualizará correctamente en navegadores Linux (Firefox/Chrome).
+
+**Comando de Validación Rápida:**
+```bash
+# Verificar que Docker corre nativamente y tiene acceso a volúmenes
+docker run --rm -v $(pwd):/data alpine ls -la /data
+```

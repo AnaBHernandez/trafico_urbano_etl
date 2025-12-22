@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: De Obreros a Arquitectos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn {
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <header class="bg-white shadow-sm pb-10">
+        <div class="container mx-auto px-6 py-10 text-center">
+            <div class="text-6xl mb-4">🧱</div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900">De Obreros a Arquitectos</h1>
+            <p class="mt-4 text-lg text-gray-600">Cómo Terraform y una buena documentación transforman nuestro trabajo.</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 -mt-16 mb-12 relative z-10">
+        <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-6 border-t-4 border-purple-500">
+            <h3 class="text-xl font-bold text-center mb-4 text-gray-700">Enlaces Rápidos del Proyecto</h3>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <a href="https://github.com/AnaBHernandez/proyecto-tienda-ventas-tecnologia" target="_blank" class="w-full md:w-auto flex-1 bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-center hover:bg-gray-900 btn flex items-center justify-center gap-2">
+                    <span>🏢</span>
+                    <span>Oficina de Planos (GitHub)</span>
+                </a>
+                <a href="https://www.notion.so/Centro-de-Mando-Proyecto-Tecnolog-a-AB-268fca0f3fbb80a59e71e903a51401fd" target="_blank" class="w-full md:w-auto flex-1 bg-purple-600 text-white font-bold py-3 px-6 rounded-lg text-center hover:bg-purple-700 btn flex items-center justify-center gap-2">
+                    <span>🏛️</span>
+                    <span>Centro de Mando (Notion)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto p-6 md:p-8 pt-0">
+
+        <section id="problem" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-10">El Problema: Construir a Mano</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="bg-red-50 p-6 rounded-lg border-2 border-red-200">
+                    <div class="text-5xl mb-4">😩</div>
+                    <h3 class="font-bold text-xl text-red-800">Lento y Manual</h3>
+                    <p class="text-red-700 mt-2">Cada despliegue era un proceso largo y tedioso, pieza por pieza.</p>
+                </div>
+                <div class="bg-yellow-50 p-6 rounded-lg border-2 border-yellow-300">
+                    <div class="text-5xl mb-4">🤯</div>
+                    <h3 class="font-bold text-xl text-yellow-800">Propenso a Errores</h3>
+                    <p class="text-yellow-700 mt-2">Un clic equivocado podía generar inconsistencias difíciles de detectar.</p>
+                </div>
+                <div class="bg-purple-50 p-6 rounded-lg border-2 border-purple-200">
+                    <div class="text-5xl mb-4">❌</div>
+                    <h3 class="font-bold text-xl text-purple-800">Imposible de Replicar</h3>
+                    <p class="text-purple-700 mt-2">Crear un entorno idéntico para un nuevo compañero era una odisea.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-10">La Solución: Terraform son los Planos Oficiales</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center card-hover">
+                    <div class="text-5xl mb-4">📜</div>
+                    <h3 class="font-bold text-2xl text-blue-600 mb-2">main.tf: El Plano Maestro</h3>
+                    <p>
+                        **¿Qué es?** Es un archivo de texto donde definimos los recursos que queremos construir en Google Cloud. No es código complejo, es como una lista de la compra.
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        **¿Para qué sirve?** Para decirle a Terraform, de forma clara y declarativa, cómo debe ser nuestra infraestructura ideal. Es la única fuente de verdad sobre lo que queremos.
+                    </p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center card-hover">
+                    <div class="text-5xl mb-4">🤖</div>
+                    <h3 class="font-bold text-2xl text-purple-600 mb-2">`terraform apply`: El Robot Constructor</h3>
+                    <p>
+                        **¿Qué es?** Es el comando mágico que le das a Terraform.
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        **¿Para qué sirve?** Para que Terraform lea tu plano (`main.tf`), compare con lo que ya existe en Google Cloud y construya o modifique los recursos que falten. Por ejemplo, si el plano dice "crea un bucket", el robot lo crea por ti. Si dices "cambia el nombre", él se encarga solo de eso.
+                    </p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center card-hover">
+                    <div class="text-5xl mb-4">🧠</div>
+                    <h3 class="font-bold text-2xl text-pink-600 mb-2">`.tfstate`: La Memoria del Arquitecto</h3>
+                    <p>
+                        **¿Qué es?** Es un archivo de texto que Terraform crea y gestiona automáticamente. Es su "memoria" o "cuaderno de notas".
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        **¿Para qué sirve?** Es crucial. En él, Terraform anota exactamente los recursos que él ha creado. Así, cuando tú ejecutas `terraform apply` de nuevo, él no tiene que adivinar qué existe; simplemente consulta su memoria para ser ultra rápido y eficiente. **Importante:** Este archivo no lo debemos tocar nunca.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="onboarding" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-4">La Magia: Replicar el Proyecto en Minutos</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-10">Para que una compañera nueva tenga una infraestructura 100% idéntica, el proceso es simple y rápido:</p>
+            <div class="max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-8">
+                <ol class="space-y-6">
+                    <li class="flex items-center text-lg"><span class="flex items-center justify-center h-10 w-10 rounded-full bg-blue-500 text-white font-bold mr-4">1</span> Hacer `git clone` de los planos desde GitHub.</li>
+                    <li class="flex items-center text-lg"><span class="flex items-center justify-center h-10 w-10 rounded-full bg-blue-500 text-white font-bold mr-4">2</span> Tener Google Cloud SDK instalado y autenticado.</li>
+                    <li class="flex items-center text-lg"><span class="flex items-center justify-center h-10 w-10 rounded-full bg-blue-500 text-white font-bold mr-4">3</span> Ejecutar `terraform apply`.</li>
+                </ol>
+                <div class="mt-8 text-center bg-green-100 p-4 rounded-lg">
+                    <p class="font-bold text-green-800 text-xl">¡Y listo! En 15 minutos, un entorno productivo idéntico.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="documentation" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-8">El Alma del Proyecto: La Documentación</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-10">Una infraestructura tan potente necesita un manual de usuario claro. La nuestra vive en dos lugares estratégicos:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-8 flex flex-col card-hover">
+                    <h3 class="text-2xl font-bold mb-4 text-center">🏢 La Oficina de Planos (GitHub)</h3>
+                    <p class="text-center mb-4 flex-grow">Aquí residen los planos técnicos (`.tf`) y las recetas (`.py`). Es el corazón técnico del proyecto.</p>
+                    <div class="text-sm space-y-3 mb-6">
+                        <p><strong>- ¿Para quién es?</strong> El equipo de desarrollo.</p>
+                        <p><strong>- ¿Qué responde?</strong> Al <strong>QUÉ</strong> estamos construyendo.</p>
+                        <p class="bg-blue-100 text-blue-800 p-3 rounded-lg mt-2">Es la fuente de verdad absoluta para el <strong>CÓDIGO</strong>.</p>
+                    </div>
+                    <a href="https://github.com/AnaBHernandez/proyecto-tienda-ventas-tecnologia" target="_blank" class="mt-auto block w-full bg-gray-800 text-white font-bold py-3 px-4 rounded-lg text-center hover:bg-gray-900 btn">
+                        Ver Repositorio en GitHub
+                    </a>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-8 flex flex-col card-hover">
+                    <h3 class="text-2xl font-bold mb-4 text-center">🏛️ El Centro de Mando (Notion)</h3>
+                    <p class="text-center mb-4 flex-grow">Este es el "ayuntamiento" del proyecto. Explica el porqué de cada decisión y cómo usar los datos.</p>
+                    <div class="text-sm space-y-3 mb-6">
+                        <p><strong>- ¿Para quién es?</strong> Para <strong>TODA LA EMPRESA</strong>.</p>
+                        <p><strong>- ¿Qué responde?</strong> Al <strong>PORQUÉ</strong>, <strong>PARA QUÉ</strong> y <strong>CÓMO SE USA</strong>.</p>
+                        <p class="bg-purple-100 text-purple-800 p-3 rounded-lg mt-2">Es el punto de partida para entender el proyecto sin leer una línea de código.</p>
+                    </div>
+                     <a href="https://www.notion.so/Centro-de-Mando-Proyecto-Tecnolog-a-AB-268fca0f3fbb80a59e71e903a51401fd" target="_blank" class="mt-auto block w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg text-center hover:bg-purple-700 btn">
+                        Ir al Centro de Mando en Notion
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-8 mt-12 bg-gray-200">
+        <p class="text-gray-600">&copy; 2025 Proyecto Tecnología AB</p>
+    </footer>
+
+</body>
+</html>

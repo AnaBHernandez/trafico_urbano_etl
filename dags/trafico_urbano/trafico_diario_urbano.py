@@ -1,20 +1,28 @@
-# DAG DIARIO - Análisis de Tráfico Urbano - COMPLETAMENTE OPTIMIZADO
+# DAG DIARIO - Análisis de Tráfico Urbano - ARQUITECTURA ELT (Simulación Cloud)
 # Fecha: 24 Septiembre 2025
-# Propósito: Análisis de tráfico urbano en tiempo real - MÁXIMO 5 MINUTOS
-# Estado: MANUAL (desarrollo / formación)
-# OPTIMIZACIÓN: 0 PythonOperators - TODO en SQL
+# Propósito: Replicar arquitectura Tecnología AB (Bronze -> Silver -> Golden)
+# Estrategia: ELT con PostgreSQL (Simulando BigQuery)
 
+import os
 import pendulum
-import pandas as pd
-import sqlite3
+from pathlib import Path
 from airflow.models.dag import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+
+# Intent: Hacer rutas configurables por variables de entorno y defensivas
+try:
+    import pandas as pd
+except Exception as e:
+    pd = None
 
 # =====================================================
 # VARIABLES DE CONFIGURACIÓN
 # =====================================================
-DB_PATH = '/opt/airflow/buckets/golden-bucket/database/trafico_urbano.db'
+# Rutas configurables: si Airflow monta /opt/airflow se usarán, si no, usamos rutas del repo
+DEFAULT_BRONZE = Path(os.environ.get('BRONZE_PATH', Path.cwd() / 'buckets' / 'bronze-bucket' / 'raw_data'))
 DAG_ID = 'trafico_diario_urbano'
 
 # =====================================================
@@ -34,120 +42,34 @@ default_args = {
 # FUNCIONES DE PROCESAMIENTO
 # =====================================================
 
+def cargar_csv_a_postgres(table_name, csv_filename, **context):
+    """
+    Simula GCSToBigQuery: Lee CSV (Bronze) y carga a Postgres (Silver).
+    Usa PostgresHook para manejar la conexión.
+    """
+    if pd is None:
+        raise RuntimeError("pandas es necesario para la carga inicial")
 
-def cargar_datos_sensores(**context):
-    """Carga datos de sensores de tráfico"""
-    # Leer datos CSV
-    df = pd.read_csv('/opt/airflow/buckets/bronze-bucket/raw_data/sensores_trafico.csv')
+    csv_path = DEFAULT_BRONZE / csv_filename
+    if not csv_path.exists():
+        raise FileNotFoundError(f"CSV no encontrado: {csv_path}")
 
-    # Conectar a SQLite
-    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_csv(csv_path)
+    
+    # Usar el Hook de Postgres para obtener el engine de SQLAlchemy
+    pg_hook = PostgresHook(postgres_conn_id='postgres_default')
+    engine = pg_hook.get_sqlalchemy_engine()
 
-    # Crear tabla si no existe
-    df.to_sql('silver_sensores_trafico', conn, if_exists='replace', index=False)
-
-    conn.close()
-    return f"Sensores cargados: {len(df)} registros"
-
-
-def cargar_datos_semaforos(**context):
-    """Carga datos de semáforos"""
-    # Leer datos CSV
-    df = pd.read_csv('/opt/airflow/buckets/bronze-bucket/raw_data/semaforos.csv')
-
-    # Conectar a SQLite
-    conn = sqlite3.connect(DB_PATH)
-
-    # Crear tabla si no existe
-    df.to_sql('silver_semaforos', conn, if_exists='replace', index=False)
-
-    conn.close()
-    return f"Semáforos cargados: {len(df)} registros"
-
-
-def cargar_datos_camaras(**context):
-    """Carga datos de cámaras de seguridad"""
-    # Leer datos CSV
-    df = pd.read_csv('/opt/airflow/buckets/bronze-bucket/raw_data/camaras_seguridad.csv')
-
-    # Conectar a SQLite
-    conn = sqlite3.connect(DB_PATH)
-
-    # Crear tabla si no existe
-    df.to_sql('silver_camaras_seguridad', conn, if_exists='replace', index=False)
-
-    conn.close()
-    return f"Cámaras cargadas: {len(df)} registros"
-
-
-def cargar_datos_incidentes(**context):
-    """Carga datos de incidentes de tráfico"""
-    # Leer datos CSV
-    df = pd.read_csv('/opt/airflow/buckets/bronze-bucket/raw_data/incidentes_trafico.csv')
-
-    # Conectar a SQLite
-    conn = sqlite3.connect(DB_PATH)
-
-    # Crear tabla si no existe
-    df.to_sql('silver_incidentes_trafico', conn, if_exists='replace', index=False)
-
-    conn.close()
-    return f"Incidentes cargados: {len(df)} registros"
-
-
-def cargar_datos_vehiculos(**context):
-    """Carga datos de vehículos detectados"""
-    # Leer datos CSV
-    df = pd.read_csv('/opt/airflow/buckets/bronze-bucket/raw_data/vehiculos.csv')
-
-    # Conectar a SQLite
-    conn = sqlite3.connect(DB_PATH)
-
-    # Crear tabla si no existe
-    df.to_sql('silver_vehiculos', conn, if_exists='replace', index=False)
-
-    conn.close()
-    return f"Vehículos cargados: {len(df)} registros"
-
-
-def crear_analisis_golden(**context):
-    """Crea análisis Golden consolidado"""
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Crear tabla Golden con análisis consolidado
-    cursor.execute("""
-        DROP TABLE IF EXISTS golden_analisis_trafico
-    """)
-    cursor.execute("""
-        CREATE TABLE golden_analisis_trafico AS
-        SELECT
-            s.sensor_id,
-            s.ubicacion,
-            s.velocidad_promedio,
-            s.vehiculos_por_hora,
-            s.ocupacion_porcentaje,
-            i.tipo_incidente,
-            i.severidad,
-            datetime('now') as analyzed_at
-        FROM silver_sensores_trafico s
-        LEFT JOIN silver_incidentes_trafico i ON s.ubicacion = i.ubicacion
-    """)
-
-    # Verificar resultados
-    cursor.execute("SELECT COUNT(*) FROM golden_analisis_trafico")
-    count = cursor.fetchone()[0]
-
-    conn.commit()
-    conn.close()
-    return f"Análisis Golden creado: {count} registros"
+    # Carga a Postgres (Silver Layer)
+    df.to_sql(table_name, engine, if_exists='replace', index=False)
+    return f"Cargado {table_name}: {len(df)} registros"
 
 
 def generar_metricas_rendimiento(**context):
     """Genera métricas de rendimiento del sistema"""
-
-    conn = sqlite3.connect(DB_PATH)
+    
+    pg_hook = PostgresHook(postgres_conn_id='postgres_default')
+    conn = pg_hook.get_conn()
     cursor = conn.cursor()
 
     # Métricas de sensores
@@ -184,7 +106,7 @@ dag = DAG(
     description='Análisis de tráfico urbano diario',
     schedule_interval='@daily',
     catchup=False,
-    tags=['trafico', 'diario', 'etl']
+    tags=['trafico', 'diario', 'elt', 'postgres']
 )
 
 # =====================================================
@@ -198,38 +120,58 @@ start = DummyOperator(
 # Tareas de carga de datos
 load_sensores = PythonOperator(
     task_id='load_sensores_trafico',
-    python_callable=cargar_datos_sensores,
+    python_callable=cargar_csv_a_postgres,
+    op_kwargs={'table_name': 'silver_sensores_trafico', 'csv_filename': 'sensores_trafico.csv'},
     dag=dag
 )
 
 load_semaforos = PythonOperator(
     task_id='load_semaforos',
-    python_callable=cargar_datos_semaforos,
+    python_callable=cargar_csv_a_postgres,
+    op_kwargs={'table_name': 'silver_semaforos', 'csv_filename': 'semaforos.csv'},
     dag=dag
 )
 
 load_camaras = PythonOperator(
     task_id='load_camaras_seguridad',
-    python_callable=cargar_datos_camaras,
+    python_callable=cargar_csv_a_postgres,
+    op_kwargs={'table_name': 'silver_camaras_seguridad', 'csv_filename': 'camaras_seguridad.csv'},
     dag=dag
 )
 
 load_incidentes = PythonOperator(
     task_id='load_incidentes_trafico',
-    python_callable=cargar_datos_incidentes,
+    python_callable=cargar_csv_a_postgres,
+    op_kwargs={'table_name': 'silver_incidentes_trafico', 'csv_filename': 'incidentes_trafico.csv'},
     dag=dag
 )
 
 load_vehiculos = PythonOperator(
     task_id='load_vehiculos_detectados',
-    python_callable=cargar_datos_vehiculos,
+    python_callable=cargar_csv_a_postgres,
+    op_kwargs={'table_name': 'silver_vehiculos', 'csv_filename': 'vehiculos.csv'},
     dag=dag
 )
 
-# Tareas de análisis
-create_golden = PythonOperator(
+# Tareas de análisis (Transformación SQL pura - Equivalente a BigQueryInsertJobOperator)
+create_golden = PostgresOperator(
     task_id='create_golden_analysis',
-    python_callable=crear_analisis_golden,
+    postgres_conn_id='postgres_default',
+    sql="""
+        DROP TABLE IF EXISTS golden_analisis_trafico;
+        CREATE TABLE golden_analisis_trafico AS
+        SELECT
+            s.sensor_id,
+            s.ubicacion,
+            s.velocidad_promedio,
+            s.vehiculos_por_hora,
+            s.ocupacion_porcentaje,
+            i.tipo_incidente,
+            i.severidad,
+            NOW() as analyzed_at
+        FROM silver_sensores_trafico s
+        LEFT JOIN silver_incidentes_trafico i ON s.ubicacion = i.ubicacion;
+    """,
     dag=dag
 )
 

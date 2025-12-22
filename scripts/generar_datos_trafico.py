@@ -5,6 +5,7 @@ Script para generar datos sintéticos de tráfico urbano
 import pandas as pd
 import random
 from datetime import datetime, timedelta
+from pathlib import Path
 def generar_datos_sensores_tiempo_real(fecha, num_sensores=50):
     """Genera datos de sensores de tráfico para una fecha específica"""
     # Ubicaciones de sensores
@@ -214,31 +215,57 @@ def generar_datos_vehiculos_tiempo_real(fecha, num_vehiculos=100):
             'velocidad': round(velocidad, 2)
         })
     return pd.DataFrame(datos_vehiculos)
+def generar_datos_camaras_tiempo_real(fecha, num_camaras=20):
+    """Genera datos de cámaras de seguridad para una fecha específica"""
+    datos_camaras = []
+    for i in range(num_camaras):
+        datos_camaras.append({
+            'camara_id': f"CAM{i + 1:03d}",
+            'ubicacion': f"Ubicación {i + 1}",
+            'estado': 'Operativa',
+            'timestamp': datetime.combine(fecha, datetime.min.time())
+        })
+    return pd.DataFrame(datos_camaras)
 def main():
     """Función principal para generar todos los datos"""
     print("🚗 Generando datos sintéticos de tráfico urbano...")
     # Fecha base (hoy)
     fecha_base = datetime.now().date()
-    # Generar datos para los últimos 7 días
-    for dias_atras in range(7):
-        fecha = fecha_base - timedelta(days=dias_atras)
-        print(f"📅 Generando datos para {fecha}...")
-        # Generar datos de sensores
-        sensores_df = generar_datos_sensores_tiempo_real(fecha)
-        sensores_df.to_csv(f'data/sensores_trafico_{fecha}.csv', index=False)
-        print(f"  ✅ Sensores: {len(sensores_df)} registros")
-        # Generar datos de semáforos
-        semaforos_df = generar_datos_semaforos_tiempo_real(fecha)
-        semaforos_df.to_csv(f'data/semaforos_{fecha}.csv', index=False)
-        print(f"  ✅ Semáforos: {len(semaforos_df)} registros")
-        # Generar datos de incidentes
-        incidentes_df = generar_datos_incidentes_tiempo_real(fecha)
-        incidentes_df.to_csv(f'data/incidentes_trafico_{fecha}.csv', index=False)
-        print(f"  ✅ Incidentes: {len(incidentes_df)} registros")
-        # Generar datos de vehículos
-        vehiculos_df = generar_datos_vehiculos_tiempo_real(fecha)
-        vehiculos_df.to_csv(f'data/vehiculos_{fecha}.csv', index=False)
-        print(f"  ✅ Vehículos: {len(vehiculos_df)} registros")
+    
+    # Directorio de salida compatible con Airflow (Bronze Bucket)
+    output_dir = Path("buckets/bronze-bucket/raw_data")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    print(f"📂 Directorio de salida: {output_dir}")
+
+    # Generamos datos solo para hoy para la prueba inmediata
+    fecha = fecha_base
+    print(f"📅 Generando datos para {fecha}...")
+    
+    # Generar datos de sensores
+    sensores_df = generar_datos_sensores_tiempo_real(fecha)
+    sensores_df.to_csv(output_dir / 'sensores_trafico.csv', index=False)
+    print(f"  ✅ Sensores: {len(sensores_df)} registros")
+    
+    # Generar datos de semáforos
+    semaforos_df = generar_datos_semaforos_tiempo_real(fecha)
+    semaforos_df.to_csv(output_dir / 'semaforos.csv', index=False)
+    print(f"  ✅ Semáforos: {len(semaforos_df)} registros")
+    
+    # Generar datos de incidentes
+    incidentes_df = generar_datos_incidentes_tiempo_real(fecha)
+    incidentes_df.to_csv(output_dir / 'incidentes_trafico.csv', index=False)
+    print(f"  ✅ Incidentes: {len(incidentes_df)} registros")
+    
+    # Generar datos de vehículos
+    vehiculos_df = generar_datos_vehiculos_tiempo_real(fecha)
+    vehiculos_df.to_csv(output_dir / 'vehiculos.csv', index=False)
+    print(f"  ✅ Vehículos: {len(vehiculos_df)} registros")
+
+    # Generar datos de cámaras (Nuevo)
+    camaras_df = generar_datos_camaras_tiempo_real(fecha)
+    camaras_df.to_csv(output_dir / 'camaras_seguridad.csv', index=False)
+    print(f"  ✅ Cámaras: {len(camaras_df)} registros")
+
     print("🎉 ¡Datos generados exitosamente!")
 if __name__ == "__main__":
     main()

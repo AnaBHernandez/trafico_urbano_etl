@@ -5,6 +5,8 @@
 # OPTIMIZACIÓN: Análisis de datos históricos
 
 import pendulum
+import os
+from sqlalchemy import create_engine, text
 from airflow.models.dag import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator
@@ -12,7 +14,6 @@ from airflow.operators.python import PythonOperator
 # =====================================================
 # VARIABLES DE CONFIGURACIÓN
 # =====================================================
-DB_PATH = '/opt/airflow/buckets/golden-bucket/database/trafico_urbano.db'
 DAG_ID = 'trafico_historico_urbano'
 
 # =====================================================
@@ -22,26 +23,23 @@ DAG_ID = 'trafico_historico_urbano'
 
 def analizar_congestiones_historicas(**context):
     """Analiza congestiones históricas por ubicación"""
-    import sqlite3
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT
-            ubicacion,
-            COUNT(*) as total_congestiones,
-            AVG(ocupacion_porcentaje) as ocupacion_promedio,
-            MAX(ocupacion_porcentaje) as ocupacion_maxima
-        FROM golden_analisis_trafico
-        WHERE ocupacion_porcentaje > 80
-        AND DATE(analyzed_at) >= DATE('now', '-30 days')
-        GROUP BY ubicacion
-        ORDER BY total_congestiones DESC
-        LIMIT 10
-    """)
-
-    resultados = cursor.fetchall()
+    engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+    
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT
+                ubicacion,
+                COUNT(*) as total_congestiones,
+                AVG(ocupacion_porcentaje) as ocupacion_promedio,
+                MAX(ocupacion_porcentaje) as ocupacion_maxima
+            FROM golden_analisis_trafico
+            WHERE ocupacion_porcentaje > 80
+            AND analyzed_at::date >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY ubicacion
+            ORDER BY total_congestiones DESC
+            LIMIT 10
+        """))
+        resultados = result.fetchall()
 
     print("📊 ANÁLISIS DE CONGESTIONES HISTÓRICAS:")
     for ubicacion, total, promedio, maxima in resultados:
@@ -50,31 +48,28 @@ def analizar_congestiones_historicas(**context):
             f"{promedio:.1f}% promedio, {maxima:.1f}% máxima"
         )
 
-    conn.close()
     return f"Congestiones analizadas: {len(resultados)} ubicaciones"
 
 
 def analizar_tendencias_historicas(**context):
     """Analiza tendencias históricas de tráfico"""
-    import sqlite3
     import pandas as pd
 
-    conn = sqlite3.connect(DB_PATH)
+    engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
 
     query = """
         SELECT
-            strftime('%H', analyzed_at) as hora,
+            TO_CHAR(analyzed_at, 'HH24') as hora,
             AVG(velocidad_promedio) as velocidad_promedio,
             AVG(vehiculos_por_hora) as vehiculos_promedio,
             AVG(ocupacion_porcentaje) as ocupacion_promedio
         FROM golden_analisis_trafico
-        WHERE DATE(analyzed_at) >= DATE('now', '-30 days')
-        GROUP BY strftime('%H', analyzed_at)
+        WHERE analyzed_at::date >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY TO_CHAR(analyzed_at, 'HH24')
         ORDER BY hora
     """
 
-    df = pd.read_sql_query(query, conn)
-    conn.close()
+    df = pd.read_sql_query(query, engine)
 
     print("📈 TENDENCIAS HISTÓRICAS DE TRÁFICO:")
     print("  - Período analizado: Últimos 30 días")
@@ -91,28 +86,24 @@ def analizar_tendencias_historicas(**context):
 
 def metricas_rendimiento_historico(**context):
     """Genera métricas de rendimiento histórico"""
-    import sqlite3
+    engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
+    
+    with engine.connect() as conn:
+        # Métricas generales
+        result = conn.execute(text("SELECT COUNT(*) FROM golden_analisis_trafico"))
+        total_registros = result.fetchone()[0]
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+        result = conn.execute(text("""
+            SELECT AVG(velocidad_promedio) FROM golden_analisis_trafico
+            WHERE analyzed_at::date >= CURRENT_DATE - INTERVAL '7 days'
+        """))
+        velocidad_semanal = result.fetchone()[0] or 0
 
-    # Métricas generales
-    cursor.execute("SELECT COUNT(*) FROM golden_analisis_trafico")
-    total_registros = cursor.fetchone()[0]
-
-    cursor.execute("""
-        SELECT AVG(velocidad_promedio) FROM golden_analisis_trafico
-        WHERE DATE(analyzed_at) >= DATE('now', '-7 days')
-    """)
-    velocidad_semanal = cursor.fetchone()[0] or 0
-
-    cursor.execute("""
-        SELECT AVG(ocupacion_porcentaje) FROM golden_analisis_trafico
-        WHERE DATE(analyzed_at) >= DATE('now', '-7 days')
-    """)
-    ocupacion_semanal = cursor.fetchone()[0] or 0
-
-    conn.close()
+        result = conn.execute(text("""
+            SELECT AVG(ocupacion_porcentaje) FROM golden_analisis_trafico
+            WHERE analyzed_at::date >= CURRENT_DATE - INTERVAL '7 days'
+        """))
+        ocupacion_semanal = result.fetchone()[0] or 0
 
     print("📊 MÉTRICAS DE RENDIMIENTO HISTÓRICO:")
     print(f"  - Total de registros: {total_registros}")
@@ -124,26 +115,24 @@ def metricas_rendimiento_historico(**context):
 
 def generar_reporte_semanal(**context):
     """Genera reporte semanal consolidado"""
-    import sqlite3
     import pandas as pd
 
-    conn = sqlite3.connect(DB_PATH)
+    engine = create_engine(os.getenv('DATA_WAREHOUSE_CONN'))
 
     query = """
         SELECT
-            DATE(analyzed_at) as fecha,
+            analyzed_at::date as fecha,
             COUNT(*) as registros,
             AVG(velocidad_promedio) as velocidad_promedio,
             AVG(vehiculos_por_hora) as vehiculos_promedio,
             AVG(ocupacion_porcentaje) as ocupacion_promedio
         FROM golden_analisis_trafico
-        WHERE DATE(analyzed_at) >= DATE('now', '-7 days')
-        GROUP BY DATE(analyzed_at)
+        WHERE analyzed_at::date >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY analyzed_at::date
         ORDER BY fecha
     """
 
-    df = pd.read_sql_query(query, conn)
-    conn.close()
+    df = pd.read_sql_query(query, engine)
 
     print("📈 REPORTE SEMANAL DE TRÁFICO:")
     print("  - Período: Últimos 7 días")
